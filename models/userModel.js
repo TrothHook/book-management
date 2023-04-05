@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
+const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
@@ -28,22 +29,33 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: 8,
       maxlength: 15,
+      select: false
     },
-    address: [
-      {
-        street: {
-          type: String,
-        },
-        city: {
-          type: String,
-        },
-        pincode: {
-          type: String,
-        },
+    address: {
+      street: {
+        type: String,
+        trim: true,
       },
-    ],
+      city: {
+        type: String,
+        trim: true,
+      },
+      pincode: {
+        type: String,
+        trim: true,
+      },
+    },
   },
   { timestamps: true }
 );
+
+// hashing the password
+
+userSchema.pre("save", async function (next) {
+  if (!this.isModified) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
+});
 
 module.exports = mongoose.model("Users", userSchema);
